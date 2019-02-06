@@ -31,19 +31,25 @@ describe('Conflict Alerter', () => {
     // just return a test token
     app.app = () => 'test'
 
-    mockCallback = jest.fn(() => ({
+    mockCallback = jest.fn((): {
       data: {
-        mergeable,
-        label: 'Merge Conflict',
-        user: {
-          login
-        }
+        mergeable: boolean | null;
+        label?: string;
+        user?: Record<string, string>;
       }
-    })).mockImplementationOnce(() => ({
-      data: {
-        mergeable: null
-      }
-    }))
+     } => ({
+       data: {
+         mergeable,
+         label: 'Merge Conflict',
+         user: {
+           login
+         }
+       }
+     })).mockImplementationOnce(() => ({
+       data: {
+         mergeable: null
+       }
+     }))
 
     context = {
       github: {
