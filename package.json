@@ -14,8 +14,9 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "heroku-postbuild": "yarn build",
     "dev": "nodemon --exec \"npm start\"",
-    "start": "yarn --cwd lib probot run index.js",
+    "start": "probot run ./lib/index.js",
     "lint": "standard src/*.ts test/*.ts --fix",
     "test": "jest && standard test/*.ts",
     "test:watch": "jest --watch --notify --notifyMode=change --coverage"
