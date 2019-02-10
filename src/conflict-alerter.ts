@@ -1,4 +1,4 @@
-import { some } from 'lodash'
+import { some, uniqBy } from 'lodash'
 import { labelName } from './labeller'
 
 /* eslint-disable */
@@ -15,8 +15,9 @@ type githubInfo = {
 }
 /* eslint-enable */
 
-export async function pollPullRequest (info: githubInfo, context: Record<string, any>): Promise<request> {
+async function pollPullRequest (info: githubInfo, context: Record<string, any>): Promise<request> {
   const {repo, owner, number} = info
+
   let result: Record<string, any> = {}
   for (let attempts = 0; attempts < 3; attempts++) {
     result = await context.github.pullRequests.get({owner, repo, number})
@@ -43,7 +44,7 @@ export async function pollPullRequest (info: githubInfo, context: Record<string,
   }
 }
 
-export function handleRequest (request: request, info: githubInfo, context: Record<string, any>) {
+function handleRequest (request: request, info: githubInfo, context: Record<string, any>) {
   const {repo, owner, number} = info
   const {user, mergeable, hasConflictLabel} = request
 
@@ -67,16 +68,24 @@ export function handleRequest (request: request, info: githubInfo, context: Reco
   }
 }
 
-export async function handlePushEvent (context: Record<string, any>) {
+async function handlePushEvent (context: Record<string, any>) {
   const repo = context.payload.repository.name
   const owner = context.payload.repository.owner.name
   // List last 30 updated pull requests
   const pullRequests = await context.github.pullRequests.list({repo, owner, sort: 'updated', direction: 'desc'})
 
-  pullRequests.data.forEach((pullRequest: Record<string, any>) => {
+  uniqBy(pullRequests.data, 'number').forEach((pullRequest: Record<string, any>) => {
     const githubInfo = {repo, owner, number: pullRequest.number}
-    pollPullRequest(githubInfo, context).then((pullRequest: request) => {
-      handleRequest(pullRequest, githubInfo, context)
+    exportFunctions.pollPullRequest(githubInfo, context).then((request: request) => {
+      exportFunctions.handleRequest(request, githubInfo, context)
     })
   })
 }
+
+const exportFunctions = {
+  handlePushEvent,
+  handleRequest,
+  pollPullRequest
+}
+
+export default exportFunctions
